@@ -1,3 +1,4 @@
+require_relative 'time_formatter'
 class App
   TIME_FORMATS = {
     year: '%Y',
@@ -11,22 +12,20 @@ class App
   def call(env)
     @request = Rack::Request.new(env)
     @params = @request.params['format'].split(',')
-    data
+    create_response
     [status, headers, body]
   end
 
   private
 
-  def data
-    @status_code = 200
-    @message = 'dsds'
+  def create_response
+    return response(404, 'Wrong path') unless @request.path_info == '/time'
 
-    return wrong_path unless @request.path_info == '/time'
+    @formatter = TimeFormatter.new(@params)
+    @formatter.check_params
+    return response(400, "Unknown time format #{@formatter.incorrect_params}") unless @formatter.success?
 
-    check_params
-    return unknown_format unless @incorrect_params.empty?
-
-    formed_time
+    response(200, @formatter.time)
   end
 
   def status
@@ -41,30 +40,8 @@ class App
     [@message]
   end
 
-  def wrong_path
-    @status_code = 404
-    @message = 'Wrong path'
-  end
-
-  def unknown_format
-    @status_code = 400
-    @message = "Unknown time format #{@incorrect_params}"
-  end
-
-  def check_params
-    @correct_params, @incorrect_params = @params.partition { |key| TIME_FORMATS.key?(key.to_sym) }
-
-    puts("corret - #{@correct_params}")
-    puts("incorret - #{@incorrect_params}")
-  end
-
-  def time
-    formats = @correct_params.map { |format| TIME_FORMATS[format.to_sym] }
-    Time.now.strftime(formats.join('-'))
-  end
-
-  def formed_time
-    @status_code = 200
-    @message = time
+  def response(code, text)
+    @status_code = code
+    @message = text
   end
 end
