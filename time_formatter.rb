@@ -8,22 +8,27 @@ class TimeFormatter
     second: '%Ss'
   }.freeze
 
-  attr_reader :incorrect_params
-
   def initialize(params)
     @params = params
   end
 
-  def check_params
-    @correct_params, @incorrect_params = @params.partition { |key| TIME_FORMATS.key?(key.to_sym) }
-  end
+  def check_params_and_get_time
+    correct_formats = []
+    incorrect_formats = []
 
-  def success?
-    @incorrect_params.empty?
-  end
+    @params.each do |key|
+      if TIME_FORMATS.key?(key.to_sym)
+        correct_formats << TIME_FORMATS[key.to_sym]
+      else
+        incorrect_formats << key
+      end
+    end
 
-  def time
-    formats = @correct_params.map { |format| TIME_FORMATS[format.to_sym] }
-    Time.now.strftime(formats.join('-'))
+    if incorrect_formats.empty?
+      time = Time.now.strftime(correct_formats.join('-'))
+      { success: true, time: time }
+    else
+      { success: false, incorrect_params: incorrect_formats }
+    end
   end
 end
