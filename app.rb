@@ -20,7 +20,7 @@ class App
   def create_response(params, request)
     return response(404, headers, 'Wrong path') unless request.path_info == '/time'
 
-    formatter = TimeFormatter.new(params).check_params_and_get_time
+    formatter = TimeFormatter.new(params).get_time
     return response(400, headers, "Unknown time format #{formatter[:incorrect_params]}") unless formatter[:success]
 
     response(200, headers, formatter[:time])
